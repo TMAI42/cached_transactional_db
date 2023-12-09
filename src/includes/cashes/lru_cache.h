@@ -25,9 +25,9 @@ public:
 
     void put(const Key& key, const Value& value) {
         std::lock_guard<std::mutex> lock(mutex);
-        auto it = cache_items_map.find(key);
+        auto cache_items_map_itr = cache_items_map.find(key);
 
-        if (it == cache_items_map.end()) {
+        if (cache_items_map_itr == cache_items_map.end()) {
             if (cache_items_map.size() + 1 > max_cache_size) {
                 // remove the last element from cache
                 auto last = cache_items_list.crbegin();
@@ -40,24 +40,24 @@ public:
             cache_items_map[key] = cache_items_list.begin();
         }
         else {
-            it->second->second = value;
+            cache_items_map_itr->second->second = value;
             cache_items_list.splice(cache_items_list.cbegin(), cache_items_list,
-                                    it->second);
+                                    cache_items_map_itr->second);
         }
     }
 
     const Value& get(const Key& key) const {
         std::lock_guard<std::mutex> lock(mutex);
-        auto it = cache_items_map.find(key);
+        auto cache_items_map_itr = cache_items_map.find(key);
 
-        if (it == cache_items_map.end()) {
+        if (cache_items_map_itr == cache_items_map.end()) {
             throw std::range_error("No such key in the cache");
         }
         else {
             cache_items_list.splice(cache_items_list.begin(), cache_items_list,
-                                    it->second);
+                                    cache_items_map_itr->second);
 
-            return it->second->second;
+            return cache_items_map_itr->second->second;
         }
     }
 
