@@ -6,25 +6,15 @@
 #define TRANSACTIONAL_DATABASE_H
 
 #include "i_db.h"
-#include "cashes/lru_cache.h"
+#include "caches/lru_cache.h"
+#include "caches/sized_cache_concept.h"
 
 #include <optional>
 #include <map>
 #include <unordered_map>
 #include <mutex>
 #include <thread>
-#include <concepts>
 
-template<typename T, typename Key, typename Value> concept sized_cache_concept = requires(T t,
-                                                                                          const Key &key,
-                                                                                          const Value &value,
-                                                                                          size_t max_size) {
-    { T(max_size) } -> std::same_as<T>;
-    { t.put(key, value) };
-    { t.get(key) } -> std::same_as<const Value &>;
-    { t.remove(key) } -> std::same_as<Value>;
-    { t.is_cached(key) } noexcept -> std::same_as<bool>;
-};
 
 template<typename T = lru_cache<std::string, std::string> > requires sized_cache_concept<T, std::string, std::string>
 class transactional_database : public i_db {
