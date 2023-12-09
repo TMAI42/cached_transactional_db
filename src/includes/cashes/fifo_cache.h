@@ -12,16 +12,16 @@
 #include <utility>
 
 template <typename Key, typename Value>
-class first_if_first_out_cache {
+class fifo_cache {
 
 public:
     using Value_type = typename std::pair<Key, Value>;
     using Value_itr = typename std::deque<Value_type>::iterator;
 
-    explicit first_if_first_out_cache(size_t max_size)
+    explicit fifo_cache(size_t max_size)
     : max_cache_size(max_size ? max_size : std::numeric_limits<size_t>::max()) {}
 
-    void set(const Key& key, const Value& value) {
+    void put(const Key& key, const Value& value) {
         std::lock_guard<std::mutex> lock(mutex);
 
         auto cache_items_map_itr = cache_items_map.find(key);

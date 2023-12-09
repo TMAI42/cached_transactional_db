@@ -6,16 +6,28 @@
 #define TRANSACTIONAL_DATABASE_H
 
 #include "i_db.h"
-#include "cashes/first_in_first_out_cache.h"
+#include "cashes/lru_cache.h"
 
 #include <optional>
 #include <map>
 #include <unordered_map>
 #include <mutex>
 #include <thread>
+#include <concepts>
 
+template<typename T, typename Key, typename Value> concept sized_cache_concept = requires(T t,
+                                                                                          const Key &key,
+                                                                                          const Value &value,
+                                                                                          size_t max_size) {
+    { T(max_size) } -> std::same_as<T>;
+    { t.put(key, value) };
+    { t.get(key) } -> std::same_as<const Value &>;
+    { t.remove(key) } -> std::same_as<Value>;
+    { t.is_cached(key) } noexcept -> std::same_as<bool>;
+};
+
+template<typename T = lru_cache<std::string, std::string> > requires sized_cache_concept<T, std::string, std::string>
 class transactional_database : public i_db {
-
 public:
 
     explicit transactional_database(size_t cache_size) : cache(cache_size) {}
@@ -43,7 +55,7 @@ public:
             for (const auto &[key, value]: transaction_itr->second.changes) {
                 if (value.has_value()) {
                     data[key] = value.value();
-                    cache.set(key, value.value());
+                    cache.put(key, value.value());
                 } else {
                     data.erase(key);
                     cache.remove(key);
@@ -59,7 +71,7 @@ public:
         std::lock_guard<std::mutex> lock(mutex);
 
         std::thread::id this_thread_id = std::this_thread::get_id();
-        auto transaction_itr = transactions.find(this_thread_id);
+
         if (!transactions.contains(this_thread_id)) {
             return false; // we can not abort transaction if it has not been initialized
         }
@@ -90,6 +102,7 @@ public:
         // Trying to get value fromm db
         auto db_itr = data.find(key);
         if (db_itr != data.end()) {
+            cache.put(key, db_itr->second);
             return db_itr->second;
         }
 
@@ -104,7 +117,8 @@ public:
         if (trans_it != transactions.end()) {
             trans_it->second.changes[key] = value;
         } else {
-            throw std::runtime_error("Setting data to database without active transaction"); // we cannot modify db without active transaction
+            throw std::runtime_error(
+                    "Setting data to database without active transaction"); // we cannot modify db without active transaction
         }
 
         return value;
@@ -121,7 +135,8 @@ public:
         if (transaction_itr != transactions.end()) {
             transaction_itr->second.changes[key] = std::nullopt;
         } else {
-            throw std::runtime_error("Removing from database without active transaction"); // we cannot modify db without active transaction
+            throw std::runtime_error(
+                    "Removing from database without active transaction"); // we cannot modify db without active transaction
         }
 
         return removed_data; // since we assume that transaction has not been committed yet, this is legit code
@@ -129,7 +144,7 @@ public:
 
 private:
     std::unordered_map<std::string, std::string> data;
-    first_if_first_out_cache<std::string, std::string> cache;
+    mutable T cache;
     mutable std::mutex mutex; // mutable because we want to lock does not affect const modifier for functions
 
     // Transaction struct is needed to represent current state of transaction and perform rollbacks from abortion
