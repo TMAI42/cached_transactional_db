@@ -24,7 +24,6 @@ struct i_db {
     virtual std::string set(const std::string& key, const std::string& data) = 0;
     virtual std::string remove(const std::string& key) = 0;
 
-protected:
     virtual ~i_db() = default;
 };
 
