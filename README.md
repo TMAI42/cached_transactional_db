@@ -43,6 +43,14 @@ make
  - **Thread safety**. All classes are thread safe even if they are used separately from each other
  - **Unique transaction** is implemented for each thread
 
+## Future improvements
+
+- **Error handling**. For now there is no universal wap to handle errors
+- **Add tests module**. It would be great to have tests using [GTest](https://github.com/google/googletest)
+- **Singleton pattern for db**. Maybe would be a great idea to make db as a singleton in the future, but for now there is no 
+objective reasons for it
+
+
 ## Resources 
 
 - [Cache replacement policies](https://en.wikipedia.org/wiki/Cache_replacement_policies)
