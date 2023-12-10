@@ -15,7 +15,19 @@
 #include <mutex>
 #include <thread>
 
-
+/**
+ * class transactional_database
+ *
+ * This class implements a transaction-based database system, it
+ *
+ * It supports basic CRUD (Create, Read, Update, Delete) operations within the scope
+ * of a transaction. Changes made in a transaction are only visible to that transaction until
+ * they are committed. If a transaction is aborted, all traction data would be rolled back.
+ *
+ * @tparam T The type of cache used, defaulting to an LRU cache. The cache type must conform
+ *           to the sized_cache_concept, which requires methods put, get, remove, is_cashed and
+ *           constructor with size_t parameter.
+ */
 template<typename T = lru_cache<std::string, std::string> > requires sized_cache_concept<T, std::string, std::string>
 class transactional_database : public i_db {
 public:
@@ -73,7 +85,6 @@ public:
     std::string get(const std::string &key) const override {
         std::lock_guard<std::mutex> lock(mutex);
 
-        // Trying to get information if there is active transaction and value have been changed in cache_itr
         std::thread::id this_thread_id = std::this_thread::get_id();
         auto transaction_itr = transactions.find(this_thread_id);
         if (transaction_itr != transactions.end()) {
@@ -129,7 +140,7 @@ public:
                     "Removing from database without active transaction"); // we cannot modify db without active transaction
         }
 
-        return removed_data; // since we assume that transaction has not been committed yet, this is legit code
+        return removed_data;
     }
 
 private:

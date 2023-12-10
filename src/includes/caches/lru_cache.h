@@ -13,13 +13,30 @@
 #include <utility>
 #include <limits>
 
+/*
+ * class lru_cache
+ *
+ * Implements simple least recent used cache strategy
+ *
+ * LRU Cache Mechanism:
+ * - When accessing or inserting an item, it becomes the most recently used (MRU) item.
+ * - Items that have not been accessed for a while move towards the least recently used end.
+ * - When the cache reaches its capacity and a new item needs to be inserted,
+ *   the least recently used item is discarded.
+ *
+ * Access/Insert Item X:
+ * Before: [A] <-> [B] <-> [C] <-> [D]
+ * After:  [X] <-> [A] <-> [B] <-> [C]  (D is evicted if the cache is at capacity)
+ *
+ *
+ * */
 template <typename Key, typename Value>
 class lru_cache {
 
 public:
 
     using value_type = typename std::pair<Key, Value>;
-    using value_it = typename std::list<value_type>::iterator;
+    using value_itr = typename std::list<value_type>::iterator;
 
     explicit lru_cache(size_t max_size) : max_cache_size(max_size ? max_size : std::numeric_limits<size_t>::max()) {}
 
@@ -84,7 +101,7 @@ public:
 
 private:
     mutable std::list<value_type> cache_items_list;
-    std::unordered_map<Key, value_it> cache_items_map;
+    std::unordered_map<Key, value_itr> cache_items_map;
     size_t max_cache_size;
     mutable std::mutex mutex;
 };

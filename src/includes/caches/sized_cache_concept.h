@@ -8,6 +8,16 @@
 #include <concepts>
 #include <cstddef>
 
+/**
+ * The sized_cache_concept concept defines the requirements for a cache class.
+ *
+ * Why concept is used instead of inheritance tree: We know class of cache in time of compilation, so there is no need to
+ * add additional overhead of virtualization in this case
+ *
+ * @tparam T The cache type.
+ * @tparam Key The type of the keys used to access values in the cache.
+ * @tparam Value The type of the values stored in the cache.
+ */
 template<typename T, typename Key, typename Value> concept sized_cache_concept = requires(T t, const Key &key,
                                                                                           const Value &value,
                                                                                           size_t max_size) {

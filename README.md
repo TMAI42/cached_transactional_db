@@ -38,9 +38,9 @@ make
 
 ## Core features
 
- - **DB** implements *first in first out cache* to speedup data lookups, for recent added data
- - **Rollback implementation**.Uncommitted transactions would be removed if `abort_transaction()` is called
- - **Thread safety**. Classes [first_in_first_out_cache.h](src%2Fincludes%2Fcashes%2Ffirst_in_first_out_cache.h) and [transactional_database.h](src%2Fincludes%2Fdbs%2Ftransactional_database.h) are thread safe even if they are used separately from each other
+ - **DB** implements *lru cache* to speedup data lookups, for recent added data
+ - **Rollback implementation**. Uncommitted changes would be discarded after `transaction_abort()` call
+ - **Thread safety**. All classes are thread safe even if they are used separately from each other
  - **Unique transaction** is implemented for each thread
 
 ## Resources 
